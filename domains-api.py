@@ -5,9 +5,12 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import TemplateGroup, TemplateGroup,TemplateGroupVersion
 from cognite.client.data_classes import TemplateGroup,TemplateGroupVersion, TemplateInstance, ConstantResolver
 
+TEMPLATE_GROUP="test_template1"
+TEMPLATE_INSTANCE="instance_1"
+
 def upsert_template_group(c):
     template_group_1 = TemplateGroup(
-	    "test_template1",
+	    TEMPLATE_GROUP,
 	    "test"
 	)
     c.templates.groups.upsert(template_group_1)
@@ -21,31 +24,45 @@ def upsert_templatee_group_version(c):
         }
     '''
     template_group_version = TemplateGroupVersion(schema)
-    c.templates.versions.upsert("test_template1", template_group_version)
-    res = c.templates.versions.list("test_template1", limit=10)    
-    print(res)
+    try:
+        c.templates.versions.upsert(TEMPLATE_GROUP, template_group_version)
+        res = c.templates.versions.list(TEMPLATE_GROUP, limit=10)    
+        print(res)
+    except Exception as e:
+        print("@@@ exception")
+        print("\t %s" % e)
 
-def create_pump_instances(c):
-    pump_1 = TemplateInstance(
-        external_id="asset_1",
-        template_name="Pump",
+def upsert_instance(c):
+    instance = TemplateInstance(
+        external_id=TEMPLATE_INSTANCE,
+        template_name="Generic",
         field_resolvers={
-            "inlet_pressure": ConstantResolver("timeseries_inletpressure_240"),
-            "gen": ConstantResolver("Hex")
+            "name": ConstantResolver("max")
         }
     )
-    pump_2 = TemplateInstance(
-        external_id="asset_2",
-        template_name="Pump",
-        field_resolvers={
-            "inlet_pressure": ConstantResolver("timeseries_inletpressure_249"),
-	        "gen": ConstantResolver("hex")
-	    }
-	)
-	
-    template_group_list = c.templates.versions.list("nancy.pump.dashboard2")
+    template_group_list = c.templates.versions.list(TEMPLATE_GROUP)
     latest_version = template_group_list[0].version
-    c.templates.instances.upsert("nancy.pump.dashboard2", latest_version, [pump_1, pump_2])
+    print("@@@ Latest version created on %s is %d" % (TEMPLATE_GROUP, latest_version))
+    try:
+        c.templates.instances.upsert(TEMPLATE_GROUP, latest_version, [instance])
+    except Exception as e:
+        print("@@@ exception")
+        print("\t %s" % e)
+
+def run_graphql(c):
+    query = '''
+{
+    genericQuery {
+        items {
+            _externalId
+            name 
+        }
+    }
+}
+'''
+    result = c.templates.graphql_query(TEMPLATE_GROUP, 1, query)
+    print(result)
+
 
 if __name__=="__main__":
     client_name = "schema-team-nancy"
@@ -57,6 +74,5 @@ if __name__=="__main__":
                       api_key=os.environ['COGNITE_API_KEY'])
     upsert_template_group(c)
     upsert_templatee_group_version(c)
-
-
-
+    upsert_instance(c)
+    run_graphql(c)
