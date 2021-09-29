@@ -5,7 +5,7 @@ from cognite.client import CogniteClient
 from cognite.client.data_classes import TemplateGroup, TemplateGroup,TemplateGroupVersion
 from cognite.client.data_classes import TemplateGroup,TemplateGroupVersion, TemplateInstance, ConstantResolver
 
-def create_template_group(c):
+def upsert_template_group(c):
     template_group_1 = TemplateGroup(
 	    "test_template1",
 	    "test"
@@ -14,25 +14,16 @@ def create_template_group(c):
     res = c.templates.groups.list(limit=10)
     print(res)
 
-def create_pumps(c):
-    template_group = TemplateGroup(
-        "nancy.pump.dashboard2",
-        "Template group for a pump dashboard"
-    )
-    c.templates.groups.upsert(template_group)
-
+def upsert_templatee_group_version(c):
     schema = '''
-        "The schema of pumps as seen by the dashboard"
-        type Pump @template {
-            "Inlet pressure"
-            inlet_pressure: TimeSeries,
-            "Generation"
-            gen: String
+        type Generic @template {
+            name: String
         }
     '''
     template_group_version = TemplateGroupVersion(schema)
-    print(template_group_version)
-    c.templates.versions.upsert(template_group.external_id, template_group_version)
+    c.templates.versions.upsert("test_template1", template_group_version)
+    res = c.templates.versions.list("test_template1", limit=10)    
+    print(res)
 
 def create_pump_instances(c):
     pump_1 = TemplateInstance(
@@ -64,6 +55,8 @@ if __name__=="__main__":
                       base_url="http://localhost:8080", 
                       project=os.environ['COGNITE_PROJECT'], 
                       api_key=os.environ['COGNITE_API_KEY'])
-    create_template_group(c)
+    upsert_template_group(c)
+    upsert_templatee_group_version(c)
+
 
 
