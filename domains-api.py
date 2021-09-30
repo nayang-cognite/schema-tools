@@ -32,12 +32,12 @@ def upsert_templatee_group_version(c):
         print("@@@ exception")
         print("\t %s" % e)
 
-def upsert_instance(c):
+def upsert_instance(c, instance_external_id):
     instance = TemplateInstance(
-        external_id=TEMPLATE_INSTANCE,
+        external_id=instance_external_id,
         template_name="Generic",
         field_resolvers={
-            "name": ConstantResolver("max")
+            "name": ConstantResolver("max2")
         }
     )
     template_group_list = c.templates.versions.list(TEMPLATE_GROUP)
@@ -63,10 +63,8 @@ def run_graphql(c):
     result = c.templates.graphql_query(TEMPLATE_GROUP, 1, query)
     print(result)
 
-
 if __name__=="__main__":
     client_name = "schema-team-nancy"
-
     c = CogniteClient(client_name=client_name,
                       debug=False, 
                       base_url="http://localhost:8080", 
@@ -74,5 +72,5 @@ if __name__=="__main__":
                       api_key=os.environ['COGNITE_API_KEY'])
     upsert_template_group(c)
     upsert_templatee_group_version(c)
-    upsert_instance(c)
+    upsert_instance(c, "instance_2")
     run_graphql(c)
